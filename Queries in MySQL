@@ -1,0 +1,149 @@
+CREATE TABLE Covid_deaths (
+		iso_code VARCHAR(20),
+        continent VARCHAR(100),
+        location VARCHAR(255),
+        date DATE,
+        population INT, 
+        total_cases INT,
+        new_cases INT, 
+        total_deaths INT,
+        new_deaths INT) ;
+        
+LOAD DATA LOCAL INFILE "C:\\Users\\Tableu\\COVID\\COVID_Deaths.csv"
+INTO TABLE sylwiadb.covid_deaths
+FIELDS terminated by ','
+IGNORE 1 ROWS;
+
+-- Check imported data 
+SELECT *
+FROM covid_deaths
+ORDER BY 3,4;
+
+DROP TABLE covid_deaths; 
+
+-- Repeat process for covid vaccinatons table 
+CREATE TABLE Covid_Vaccinations
+(
+	iso_code VARCHAR(15),
+    continent VARCHAR(30),
+    location VARCHAR(50),
+    date DATE , 
+    total_tests float, 
+    new_tests int, 
+    positive_rate float, 
+    tests_per_case float, 
+    tests_units int, 
+    total_vaccinations int, 
+    people_vaccinated int, 
+    people_fully_vaccinated int, 
+    total_boosters float,
+    new_vaccinations int);
+    
+LOAD DATA LOCAL INFILE "C:\\Users\\sylwa\\OneDrive\\Desktop\\Tableu\\COVID\\COVID_Vaccinations.csv"
+INTO TABLE sylwiadb.covid_vaccinations
+FIELDS TERMINATED BY ','
+IGNORE 1 ROWS; 
+
+-- Check imported data 
+SELECT *
+FROM sylwiadb.covid_vaccinations
+ORDER BY 3,4;
+
+-- checking no of rows imported into both tables 
+SELECT COUNT(*) 
+FROM covid_deaths; 
+
+SELECT COUNT(*)
+FROM covid_vaccinations; 
+
+-- looking at total cases vs total deaths 
+SELECT location, date, total_cases, total_deaths, 
+		concat(round((total_deaths/total_cases)*100,1),'%') as death_percentage
+FROM sylwiadb.covid_deaths
+ORDER BY 1, 2 ;
+
+-- Looking at possibility of dying of Covid in the UK
+SELECT location, 
+		date, 
+        total_cases,
+        total_deaths,
+        CONCAT(ROUND((total_deaths/total_cases)*100,1),'%') AS Death_percentage
+FROM sylwiadb.covid_deaths
+WHERE location ='United Kingdom'
+AND continent <>'';
+
+-- looking at total cases vs population to show what % of population got Covid
+SELECT location, 
+		date, 
+		(total_cases/population)*100 AS percentage_of_population_infected
+FROM sylwiadb.covid_deaths
+WHERE continent <>''
+AND location = 'United Kingdom';
+
+-- looking at countries with the highest infection rate compare to population
+SELECT location, population,
+		MAX(total_cases) AS highest_infection_count, 
+		MAX((total_cases/population))*100 AS percentage_population_infected
+FROM sylwiadb.coviddeaths
+WHERE continent <>''
+-- WHERE location = 'United Kingdom' 
+GROUP BY location, population
+ORDER BY percentage_population_infected DESC;
+
+------------------------------------------------------------------------------------
+-- table 1 looking at total cases , total deaths, and death percentage 
+SELECT 
+	   SUM(new_cases) AS Total_cases_count,
+       SUM(new_deaths) AS Total_deaths_count, 
+       ROUND((SUM(new_deaths)/SUM(new_cases)),2)*100 AS Death_percentage
+     FROM sylwiadb.covid_deaths
+     WHERE continent <> ''
+     AND location NOT IN ('World', 'European Union', 'International')
+;
+
+-- table 2 looking at number of deaths per continent  
+SELECT continent,
+		sum(new_deaths) AS Total_deaths_count
+FROM sylwiadb.covid_deaths
+WHERE continent <> ''
+     AND location NOT IN ('World', 'European Union', 'International')
+GROUP BY continent
+ORDER BY Total_deaths_count DESC;
+
+-- 3 table highest infection rate per population
+SELECT location, population, MAX(total_cases) AS highest_infection_count, MAX((total_cases)/population)*100 AS percent_population_infected
+FROM sylwiadb.covid_deaths
+GROUP BY location, population
+ORDER BY percent_population_infected DESC ;
+
+-- 4 table 
+SELECT location, population, date, MAX(total_cases) AS highest_infection_count, MAX((total_cases)/population)*100 AS percent_population_infected
+FROM sylwiadb.covid_deaths
+GROUP BY location, population, date 
+ORDER BY percent_population_infected DESC ;
+
+-- 5 table total number of covid cases per country 
+SELECT location,
+        SUM(new_deaths) AS deaths
+FROM sylwiadb.covid_deaths
+WHERE continent<>'' 
+AND location NOT IN ('World', 'European Union', 'International')
+GROUP BY location
+ORDER BY deaths DESC; 
+        
+-- total number of covid cases per country using concat function
+SELECT location,
+        concat(round((SUM(new_cases)/1000000),2),'M') AS cases
+FROM sylwiadb.covid_deaths
+WHERE continent<>'' 
+AND location NOT IN ('World', 'European Union', 'International')
+GROUP BY location
+ORDER BY cases DESC; 
+	
+    
+SELECT location,
+        round((SUM(new_cases)/1000000),2) AS cases
+FROM sylwiadb.covid_deaths
+WHERE continent <>''
+GROUP BY location
+ORDER BY cases DESC; 
